@@ -33,7 +33,8 @@ images_folder
 The `src/measure.py` script can be used to run the algorithm. The required arguments are
 - `--images_path`: path to the images folder, which must have the structure outlined above.
 - `--model`: path to the UNet model used in the algorithm. Pretrained models are available in the `models` folder.
-- `--result_folder`: path to the folder where results will be exported.
+- `--result_folder`: path to the folder where results will be exported.  
+
 Additionally, you can specify the following:
 - `--min_object_size`: the expected minimum object size in pixels. Default is 0. Detected objects below this size will be filtered out.
 - `--max_object_size`: the expected maximum object size in pixels. Default is `np.inf`. Detected objects above this size will be filtered out.
