@@ -14,10 +14,11 @@ parser.add_argument("--min_object_size", type=float, default=0)
 parser.add_argument("--max_object_size", type=float, default=np.inf)
 parser.add_argument("--dpi", type=float, default=False)
 parser.add_argument("--dpm", type=float, default=False)
+parser.add_argument("--visualize", type=bool, default=False)
 args = parser.parse_args()
 
 # determining dpm
-dpm = args.dpm if args.dpi else dpi_to_dpm(args.dpi)
+dpm = args.dpm if not args.dpi else dpi_to_dpm(args.dpi)
 
 print("Loading dataset...")
 predict_dataset = ReadTestDataset(args.images_path)
@@ -31,5 +32,5 @@ model = ModelWrapper(unet, args.result_folder, cuda_device=device)
 print("Model loaded")
 print("Measuring images...")
 model.measure_large_images(predict_dataset, export_path=args.result_folder,
-                           visualize_bboxes=False, filter=[args.min_object_size, args.max_object_size],
-                           dpm=args.dpm, verbose=True)
+                           visualize_bboxes=args.visualize, filter=[args.min_object_size, args.max_object_size],
+                           dpm=dpm, verbose=True)
