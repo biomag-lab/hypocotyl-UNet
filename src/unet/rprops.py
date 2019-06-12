@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 from skimage import io, img_as_uint
-from skimage.morphology import skeletonize, skeletonize_3d
+from skimage.morphology import skeletonize, medial_axis, skeletonize_3d
 from skimage.measure import regionprops, label
 from skimage.filters import threshold_otsu
 from skimage.measure._regionprops import _RegionProperties
@@ -63,8 +63,10 @@ class BBox:
 
 
 class Hypo:
-    def __init__(self, rprops):
+    def __init__(self, rprops, dpm=False):
         self.length = rprops.area
+        if dpm:
+            self.length /= dpm
         self.bbox = BBox(rprops.bbox)
 
     def __repr__(self):
@@ -75,11 +77,11 @@ class Hypo:
 
 
 class HypoResult:
-    def __init__(self, rprops_or_hypos):
+    def __init__(self, rprops_or_hypos, dpm=False):
         if isinstance(rprops_or_hypos[0], Hypo):
             self.hypo_list = rprops_or_hypos
         elif isinstance(rprops_or_hypos[0], _RegionProperties):
-            self.hypo_list = [Hypo(rprops) for rprops in rprops_or_hypos]
+            self.hypo_list = [Hypo(rprops, dpm) for rprops in rprops_or_hypos]
         self.gt_match = None
 
     def __getitem__(self, item):
@@ -164,6 +166,14 @@ class HypoResult:
             plt.savefig(export_path)
             plt.close('all')
 
+    def filter(self, flt):
+        if isinstance(flt, Container):
+            min_length, max_length = flt
+            self.hypo_list = [h for h in self.hypo_list if min_length <= h.length <= max_length]
+        elif isinstance(flt, bool) and flt:
+            otsu_thresh = threshold_otsu(np.array([h.length for h in self.hypo_list]))
+            self.hypo_list = [h for h in self.hypo_list if otsu_thresh <= h.length]
+
 
 def bbox_to_rectangle(bbox):
     # bbox format: 'min_row', 'min_col', 'max_row', 'max_col'
@@ -176,8 +186,8 @@ def bbox_to_rectangle(bbox):
     return (x, y), width, height
 
 
-def get_hypo_rprops(hypo, filter=True, already_skeletonized=False,
-                    return_skeleton=False):
+def get_hypo_rprops(hypo, filter=True, already_skeletonized=False, skeleton_method=skeletonize_3d,
+                    return_skeleton=False, dpm=False):
     """
     Args:
         hypo: segmented hypocotyl image
@@ -185,24 +195,19 @@ def get_hypo_rprops(hypo, filter=True, already_skeletonized=False,
     """
     hypo_thresh = (hypo > 0.5)
     if not already_skeletonized:
-        hypo_skeleton = label(img_as_uint(skeletonize_3d(hypo_thresh)))
+        hypo_skeleton = label(img_as_uint(skeleton_method(hypo_thresh)))
     else:
         hypo_skeleton = label(img_as_uint(hypo_thresh))
 
     hypo_rprops = regionprops(hypo_skeleton)
     # filter out small regions
-    if filter:
-        if isinstance(filter, Container):
-            min_length, max_length = filter
-            hypo_rprops = [r for r in hypo_rprops if min_length <= r.area <= max_length]
-        else:
-            otsu_thresh = threshold_otsu(np.array([r.area for r in hypo_rprops]))
-            hypo_rprops = [r for r in hypo_rprops if r.area > otsu_thresh]
+    hypo_result = HypoResult(hypo_rprops, dpm)
+    hypo_result.filter(flt=filter)
 
     if return_skeleton:
-        return HypoResult(hypo_rprops), hypo_skeleton > 0
+        return hypo_result, hypo_skeleton > 0
 
-    return HypoResult(hypo_rprops)
+    return hypo_result
 
 
 def visualize_regions(hypo_img, hypo_result, export_path=None):
@@ -229,6 +234,3 @@ def visualize_regions(hypo_img, hypo_result, export_path=None):
             plt.savefig(export_path, pad_inches=0, bbox_inches='tight', dpi=dpi)
 
         plt.close('all')
-
-
-

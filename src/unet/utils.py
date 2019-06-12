@@ -2,15 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 
-from skimage.measure import label
 from skimage import io, img_as_uint
+from skimage.morphology import skeletonize_3d
 
+from numbers import Number
 from itertools import product
 
 from torch.autograd import Variable
-from torch.nn.modules.loss import _WeightedLoss
 from torch.utils.data import DataLoader, Dataset
 from torch.nn.functional import cross_entropy
 from torch.nn.modules.loss import _WeightedLoss
@@ -26,6 +25,14 @@ def chk_mkdir(*args):
             os.makedirs(path)
 
 
+def dpi_to_dpm(dpi):
+    # small hack, default value for dpi is False
+    if not dpi:
+        return False
+
+    return dpi/25.4
+
+
 def to_long_tensor(pic):
     # handle numpy array
     img = torch.from_numpy(np.array(pic, np.uint8))
@@ -38,8 +45,8 @@ def joint_to_long_tensor(image, mask):
 
 
 def make_transform(
-        crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
-        p_random_affine=0, rotate_range=False, normalize=False, long_mask=False
+        crop=(256, 256), p_flip=0.5, p_color=0.0, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
+        p_random_affine=0.0, rotate_range=False, normalize=False, long_mask=False
 ):
 
     if color_jitter_params is not None:
@@ -63,7 +70,8 @@ def make_transform(
 
         # color transforms || ONLY ON IMAGE
         if color_tf is not None:
-            image = color_tf(image)
+            if np.random.rand() < p_color:
+                image = color_tf(image)
 
         # random rotation
         if rotate_range and not p_random_affine:
@@ -90,6 +98,20 @@ def make_transform(
         return image, mask
 
     return joint_transform
+
+
+def confusion_matrix(prediction, target, n_classes):
+    """
+    prediction, target: torch.Tensor objects
+    """
+    prediction = torch.argmax(prediction, dim=0).long()
+    target = torch.squeeze(target, dim=0)
+
+    conf_mtx = torch.zeros(n_classes, n_classes).long()
+    for i, j in product(range(n_classes), range(n_classes)):
+        conf_mtx[i, j] = torch.sum((prediction == j) * (target == i))
+
+    return conf_mtx
 
 
 class SoftDiceLoss(_WeightedLoss):
@@ -407,15 +429,22 @@ class ModelWrapper:
 
         return out
 
-    def measure_large_images(self, dataset, visualize_bboxes=False, filter=True, export_path=None, verbose=False):
+    def measure_large_images(self, dataset, visualize_bboxes=False, filter=True, export_path=None,
+                             skeleton_method=skeletonize_3d, dpm=False, verbose=False):
         hypocotyl_lengths = dict()
         chk_mkdir(export_path)
 
+        assert any(isinstance(dpm, tp) for tp in [str, bool, Number]), 'dpm must be string, bool or Number'
+
         for batch_idx, (X_batch, image_filename) in enumerate(DataLoader(dataset, batch_size=1)):
+
             if verbose:
                 print("Measuring %s" % image_filename[0])
+
             hypo_segmented = self.predict_single_large_image(X_batch, channel=2, tile_res=(512, 512))
-            hypo_result = get_hypo_rprops(hypo_segmented, filter=filter)
+            hypo_result, hypo_skeleton = get_hypo_rprops(hypo_segmented, filter=filter, return_skeleton=True,
+                                                         skeleton_method=skeleton_method,
+                                                         dpm=dpm)
             hypo_df = hypo_result.make_df()
 
             hypocotyl_lengths[image_filename] = hypo_df
@@ -427,6 +456,8 @@ class ModelWrapper:
                                       os.path.join(export_path, image_filename[0][:-4] + '_bbox.png'))
                     visualize_regions(hypo_segmented, hypo_result,
                                       os.path.join(export_path, image_filename[0][:-4] + '_hypo.png'))
+                    visualize_regions(hypo_skeleton, hypo_result,
+                                      os.path.join(export_path, image_filename[0][:-4] + '_skeleton.png'))
 
                 hypocotyl_lengths[image_filename].to_csv(os.path.join(export_path, image_filename[0][:-4] + '.csv'),
                                                          header=True, index=True)
@@ -434,22 +465,53 @@ class ModelWrapper:
         return hypocotyl_lengths
 
     def score_large_images(self, dataset, export_path, visualize_bboxes=False, visualize_histograms=False,
-                           filter=True, skeletonized_gt=False, match_threshold=0.5, tile_res=(512, 512)):
+                           visualize_segmentation=False,
+                           filter=True, skeletonized_gt=False, match_threshold=0.5, tile_res=(512, 512),
+                           dpm=False):
         chk_mkdir(export_path)
 
         scores = {}
 
+        assert any(isinstance(dpm, tp) for tp in [str, bool, Number]), 'dpm must be string, bool or Number'
+
+        if isinstance(dpm, str):
+            dpm_df = pd.read_csv(dpm, header=None, index_col=0)
+
         for batch_idx, (X_batch, y_batch, image_filename) in enumerate(DataLoader(dataset, batch_size=1)):
-            hypo_result_mask = self.predict_single_large_image(X_batch, channel=2, tile_res=tile_res)
-            hypo_result, hypo_result_skeleton = get_hypo_rprops(hypo_result_mask, filter=filter, return_skeleton=True)
+            if isinstance(dpm, str):
+                dpm_val = dpm_df.loc[image_filename].values[0]
+            elif isinstance(dpm, Number) or dpm == False:
+                dpm_val = dpm
+            else:
+                raise ValueError('dpm must be str, Number or False')
+
+            # getting filter range
+            if isinstance(filter, dict):
+                filter_val = filter[image_filename[0]]
+            else:
+                filter_val = filter
+
+            segmented_img = self.predict_single_large_image(X_batch, tile_res=tile_res)
+            hypo_result_mask = segmented_img[:, :, 2]
+            hypo_result, hypo_result_skeleton = get_hypo_rprops(hypo_result_mask, filter=filter_val,
+                                                                return_skeleton=True, dpm=dpm_val)
             hypo_result.make_df().to_csv(os.path.join(export_path, image_filename[0][:-4] + '_result.csv'))
+
+            if visualize_segmentation:
+                io.imsave(os.path.join(export_path, image_filename[0][:-4] + '_segmentation_skeletons.png'),
+                          img_as_uint(hypo_result_skeleton))
+                io.imsave(os.path.join(export_path, image_filename[0][:-4] + '_segmentation_hypo.png'),
+                          hypo_result_mask)
+                io.imsave(os.path.join(export_path, image_filename[0][:-4] + '_segmentation_full.png'),
+                          segmented_img)
 
             if not skeletonized_gt:
                 hypo_gt_mask = y_batch[0].data.numpy() == 2
             else:
                 hypo_gt_mask = y_batch[0].data.numpy() > 0
 
-            hypo_result_gt = get_hypo_rprops(hypo_gt_mask, filter=False, already_skeletonized=skeletonized_gt)
+            hypo_result_gt = get_hypo_rprops(hypo_gt_mask, filter=[20/dpm_val, np.inf],
+                                             already_skeletonized=skeletonized_gt, dpm=dpm_val)
             hypo_result_gt.make_df().to_csv(os.path.join(export_path, image_filename[0][:-4] + '_gt.csv'))
 
             scores[image_filename[0]], objectwise_df = hypo_result.score(hypo_result_gt,
@@ -459,11 +521,11 @@ class ModelWrapper:
             # visualization
             # histograms
             if visualize_histograms:
-                hypo_result.hist(hypo_result_gt, os.path.join(export_path, image_filename[0][:-4] + '_hist.png'))
+                hypo_result.hist(hypo_result_gt,
+                                 os.path.join(export_path, image_filename[0][:-4] + '_hist.png'))
 
             # bounding boxes
             if visualize_bboxes:
-                io.imsave(os.path.join(export_path, image_filename[0][:-4] + '_segmentation.png'), hypo_result_mask)
                 visualize_regions(hypo_gt_mask, hypo_result_gt,
                                   export_path=os.path.join(export_path, image_filename[0][:-4] + '_gt.png'))
                 visualize_regions(hypo_result_skeleton, hypo_result,
