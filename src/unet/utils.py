@@ -407,11 +407,13 @@ class ModelWrapper:
 
         return out
 
-    def measure_large_images(self, dataset, visualize_bboxes=False, filter=True, export_path=None):
+    def measure_large_images(self, dataset, visualize_bboxes=False, filter=True, export_path=None, verbose=False):
         hypocotyl_lengths = dict()
         chk_mkdir(export_path)
 
         for batch_idx, (X_batch, image_filename) in enumerate(DataLoader(dataset, batch_size=1)):
+            if verbose:
+                print("Measuring %s" % image_filename[0])
             hypo_segmented = self.predict_single_large_image(X_batch, channel=2, tile_res=(512, 512))
             hypo_result = get_hypo_rprops(hypo_segmented, filter=filter)
             hypo_df = hypo_result.make_df()
