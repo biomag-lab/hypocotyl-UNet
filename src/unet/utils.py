@@ -458,10 +458,6 @@ class ModelWrapper:
                     # segmentation
                     visualize_regions(hypo_segmented, hypo_result,
                                       os.path.join(export_path, image_filename[0][:-4] + '_segmentation.png'))
-                    # overlaid segmentation
-                    shift = 0.3
-                    visualize_regions(hypo_img*((hypo_segmented[..., np.newaxis] + shift)/(1.0 + shift)), hypo_result,
-                                      os.path.join(export_path, image_filename[0][:-4] + '_overlaid.png'))
                     # skeletonization
                     visualize_regions(hypo_skeleton, hypo_result,
                                       os.path.join(export_path, image_filename[0][:-4] + '_skeleton.png'))
