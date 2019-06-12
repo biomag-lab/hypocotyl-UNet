@@ -42,9 +42,9 @@ Additionally, you can specify the following:
 - `--device`: device to be used for the UNet prediction. Default is `cpu`, but if a GPU with the CUDA framework installed is available, `cuda:$ID` can be used, where `$ID` is the ID of the GPU. For example, `cuda:0`. (For PyTorch users: this argument is passed directly to the `torch.Tensor.device` object during initialization, which will be used for the rest of the workflow.)
 - `--visualize`: set to True to export a visualization of the results. For each measured image, the following images are exported along with the length measurements.  
 <p align="center">
-  <img src="docs/img/vis_bbox.png" width="129" height="128">
-  <img src="docs/img/vis_seg.png" width="129" height="128">
-  <img src="docs/img/vis_skl.png" width="129" height="128">
+  <img src="docs/img/vis_bbox.png" width="256">
+  <img src="docs/img/vis_seg.png" width="256">
+  <img src="docs/img/vis_skl.png" width="256">
 </p>
 
 For instance, an example is the following:
