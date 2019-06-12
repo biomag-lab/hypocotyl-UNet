@@ -41,7 +41,7 @@ Additionally, you can specify the following:
 - `--dpi` and `--dpm`: to export the lengths in *mm*, it is required to provide a *dpi* (dots per inch) or *dpm* (dots per millimeter) value. If any of this is available, the pixel units will be converted to *mm* during measurements. If both *dpi* and *dpm* is set, only *dpm* will be taken into account.
 - `--device`: device to be used for the UNet prediction. Default is `cpu`, but if a GPU with the CUDA framework installed is available, `cuda:$ID` can be used, where `$ID` is the ID of the GPU. For example, `cuda:0`. (For PyTorch users: this argument is passed directly to the `torch.Tensor.device` object during initialization, which will be used for the rest of the workflow.)
 - `--visualize`: set to True to export a visualization of the results. For each measured image, the following images are exported along with the length measurements.  
-![bbox|512x512,30%](docs/img/vis_bbox.png) ![seg|512x512,30%](docs/img/vis_seg.png) ![skl|512x512,30%](docs/img/vis_skl.png)
+![](docs/img/vis_bbox.png | width=128) ![](docs/img/vis_seg.png | width=128) ![](docs/img/vis_skl.png | width=128)
 
 For instance, an example is the following:
 ```bash
