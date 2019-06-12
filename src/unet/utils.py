@@ -452,10 +452,17 @@ class ModelWrapper:
             if export_path:
                 if visualize_bboxes:
                     hypo_img = X_batch[0].cpu().data.numpy().transpose((1, 2, 0))
+                    # original image
                     visualize_regions(hypo_img, hypo_result,
-                                      os.path.join(export_path, image_filename[0][:-4] + '_bbox.png'))
+                                      os.path.join(export_path, image_filename[0][:-4] + '.png'))
+                    # segmentation
                     visualize_regions(hypo_segmented, hypo_result,
-                                      os.path.join(export_path, image_filename[0][:-4] + '_hypo.png'))
+                                      os.path.join(export_path, image_filename[0][:-4] + '_segmentation.png'))
+                    # overlaid segmentation
+                    shift = 0.3
+                    visualize_regions(hypo_img*((hypo_segmented[..., np.newaxis] + shift)/(1.0 + shift)), hypo_result,
+                                      os.path.join(export_path, image_filename[0][:-4] + '_overlaid.png'))
+                    # skeletonization
                     visualize_regions(hypo_skeleton, hypo_result,
                                       os.path.join(export_path, image_filename[0][:-4] + '_skeleton.png'))
 
