@@ -35,9 +35,10 @@ The `src/measure.py` script can be used to run the algorithm. The required argum
 - `--model`: path to the UNet model used in the algorithm. Pretrained models are available in the `models` folder.
 - `--result_folder`: path to the folder where results will be exported.
 Additionally, you can specify the following:
-- `--device`: device to be used for the UNet prediction. Default is `cpu`, but if a GPU with the CUDA framework installed is available, `cuda:$ID` can be used, where `$ID` is the ID of the GPU. For example, `cuda:0`. (For PyTorch users: this argument is passed directly to the `torch.Tensor.device` object during initialization, which will be used for the rest of the workflow.)
-- `--min_object_size`: the expected minimum object size in pixels. Default is 50. Detected objects below this size will be filtered out.
+- `--min_object_size`: the expected minimum object size in pixels. Default is 0. Detected objects below this size will be filtered out.
 - `--max_object_size`: the expected maximum object size in pixels. Default is `np.inf`. Detected objects above this size will be filtered out.
+- `--dpi` and `--dpm`: to export the lengths in *mm*, it is required to provide a *dpi* (dots per inch) or *dpm* (dots per millimeter) value. If any of this is available, the pixel units will be converted to *mm* during measurements. If both *dpi* and *dpm* is set, only *dpm* will be taken into account.
+- `--device`: device to be used for the UNet prediction. Default is `cpu`, but if a GPU with the CUDA framework installed is available, `cuda:$ID` can be used, where `$ID` is the ID of the GPU. For example, `cuda:0`. (For PyTorch users: this argument is passed directly to the `torch.Tensor.device` object during initialization, which will be used for the rest of the workflow.)
 
 For instance, an example is the following:
 ```bash
