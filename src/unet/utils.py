@@ -441,8 +441,9 @@ class ModelWrapper:
             if verbose:
                 print("Measuring %s" % image_filename[0])
 
-            hypo_segmented = self.predict_single_large_image(X_batch, channel=2, tile_res=(512, 512))
-            hypo_result, hypo_skeleton = get_hypo_rprops(hypo_segmented, filter=filter, return_skeleton=True,
+            hypo_segmented = self.predict_single_large_image(X_batch, tile_res=(512, 512))
+            hypo_segmented_mask = hypo_segmented[:, :, 2]
+            hypo_result, hypo_skeleton = get_hypo_rprops(hypo_segmented_mask, filter=filter, return_skeleton=True,
                                                          skeleton_method=skeleton_method,
                                                          dpm=dpm)
             hypo_df = hypo_result.make_df()
@@ -457,7 +458,8 @@ class ModelWrapper:
                                       os.path.join(export_path, image_filename[0][:-4] + '.png'))
                     # segmentation
                     visualize_regions(hypo_segmented, hypo_result,
-                                      os.path.join(export_path, image_filename[0][:-4] + '_segmentation.png'))
+                                      os.path.join(export_path, image_filename[0][:-4] + '_segmentation.png'),
+                                      bbox_color='0.5')
                     # skeletonization
                     visualize_regions(hypo_skeleton, hypo_result,
                                       os.path.join(export_path, image_filename[0][:-4] + '_skeleton.png'))

@@ -210,23 +210,23 @@ def get_hypo_rprops(hypo, filter=True, already_skeletonized=False, skeleton_meth
     return hypo_result
 
 
-def visualize_regions(hypo_img, hypo_result, export_path=None):
+def visualize_regions(hypo_img, hypo_result, export_path=None, bbox_color='r', dpi=50):
     with plt.style.context('seaborn-white'):
-        dpi = 50
-        figsize = (hypo_img.shape[0]/dpi, hypo_img.shape[1]/dpi)
+        # parameters
+        fontsize = 30.0
+        linewidth = fontsize / 10.0
 
+        figsize = (hypo_img.shape[0]/dpi, hypo_img.shape[1]/dpi)
         fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = plt.Axes(fig, [0,0,1,1]) #plt.subplot(111)
         fig.add_axes(ax)
         ax.imshow(hypo_img)
         for hypo_idx, hypo in enumerate(hypo_result):
-            fontsize = 30.0
-            linewidth = fontsize / 10.0
             rectangle = patches.Rectangle((hypo.bbox.x, hypo.bbox.y), hypo.bbox.width, hypo.bbox.height,
-                                          linewidth=linewidth, edgecolor='r', facecolor='none')
+                                          linewidth=linewidth, edgecolor=bbox_color, facecolor='none')
             ax.add_patch(rectangle)
             ax.text(hypo.bbox.x, hypo.bbox.y - linewidth - 0.8*fontsize, "N.%d." % (hypo_idx+1), fontsize=fontsize, color='k')
-            ax.text(hypo.bbox.x, hypo.bbox.y - linewidth, str(hypo.length)[:4], fontsize=fontsize, color='r')
+            ax.text(hypo.bbox.x, hypo.bbox.y - linewidth, str(hypo.length)[:4], fontsize=fontsize, color=bbox_color)
 
         fig.axes[0].get_xaxis().set_visible(False)
         fig.axes[0].get_yaxis().set_visible(False)
