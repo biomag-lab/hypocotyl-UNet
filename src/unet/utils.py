@@ -430,7 +430,7 @@ class ModelWrapper:
         return out
 
     def measure_large_images(self, dataset, visualize_bboxes=False, filter=True, export_path=None,
-                             skeleton_method=skeletonize_3d, dpm=False, verbose=False):
+                             skeleton_method=skeletonize_3d, dpm=False, verbose=False, tile_res=(512, 512)):
         hypocotyl_lengths = dict()
         chk_mkdir(export_path)
 
@@ -441,7 +441,7 @@ class ModelWrapper:
             if verbose:
                 print("Measuring %s" % image_filename[0])
 
-            hypo_segmented = self.predict_single_large_image(X_batch, tile_res=(512, 512))
+            hypo_segmented = self.predict_single_large_image(X_batch, tile_res=tile_res)
             hypo_segmented_mask = hypo_segmented[:, :, 2]
             hypo_result, hypo_skeleton = get_hypo_rprops(hypo_segmented_mask, filter=filter, return_skeleton=True,
                                                          skeleton_method=skeleton_method,

@@ -33,4 +33,4 @@ print("Model loaded")
 print("Measuring images...")
 model.measure_large_images(predict_dataset, export_path=args.result_folder,
                            visualize_bboxes=args.visualize, filter=[args.min_object_size, args.max_object_size],
-                           dpm=dpm, verbose=True)
+                           dpm=dpm, verbose=True, tile_res=(256, 256))
