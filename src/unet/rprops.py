@@ -210,10 +210,10 @@ def get_hypo_rprops(hypo, filter=True, already_skeletonized=False, skeleton_meth
     return hypo_result
 
 
-def visualize_regions(hypo_img, hypo_result, export_path=None, bbox_color='r', dpi=50):
+def visualize_regions(hypo_img, hypo_result, export_path=None, bbox_color='r', dpi=100):
     with plt.style.context('seaborn-white'):
         # parameters
-        fontsize = 30.0
+        fontsize = 3.0
         linewidth = fontsize / 10.0
 
         figsize = (hypo_img.shape[0]/dpi, hypo_img.shape[1]/dpi)
@@ -225,7 +225,7 @@ def visualize_regions(hypo_img, hypo_result, export_path=None, bbox_color='r', d
             rectangle = patches.Rectangle((hypo.bbox.x, hypo.bbox.y), hypo.bbox.width, hypo.bbox.height,
                                           linewidth=linewidth, edgecolor=bbox_color, facecolor='none')
             ax.add_patch(rectangle)
-            ax.text(hypo.bbox.x, hypo.bbox.y - linewidth - 0.8*fontsize, "N.%d." % (hypo_idx+1), fontsize=fontsize, color='k')
+            ax.text(hypo.bbox.x, hypo.bbox.y - linewidth - 8*fontsize, "N.%d." % (hypo_idx+1), fontsize=fontsize, color='k')
             ax.text(hypo.bbox.x, hypo.bbox.y - linewidth, str(hypo.length)[:4], fontsize=fontsize, color=bbox_color)
 
         fig.axes[0].get_xaxis().set_visible(False)
@@ -234,6 +234,6 @@ def visualize_regions(hypo_img, hypo_result, export_path=None, bbox_color='r', d
         if export_path is None:
             plt.show()
         else:
-            plt.savefig(export_path, pad_inches=0, bbox_inches='tight', dpi=dpi)
+            plt.savefig(export_path, pad_inches=0, bbox_inches='tight', dpi=dpi*10)
 
         plt.close('all')
