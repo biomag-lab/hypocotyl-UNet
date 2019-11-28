@@ -32,7 +32,7 @@ images_folder
 ```
 The `src/measure.py` script can be used to run the algorithm. The required arguments are
 - `--images_path`: path to the images folder, which must have the structure outlined above.
-- `--model`: path to the UNet model used in the algorithm. Pretrained models are available in the `models` folder.
+- `--model`: path to the UNet model used in the algorithm.
 - `--result_folder`: path to the folder where results will be exported.  
 
 Additionally, you can specify the following:
