@@ -33,6 +33,13 @@ def dpi_to_dpm(dpi):
     return dpi/25.4
 
 
+def dpm_to_dpi(dpm):
+    if not dpm:
+        return False
+
+    return dpm * 25.4
+
+
 def to_long_tensor(pic):
     # handle numpy array
     img = torch.from_numpy(np.array(pic, np.uint8))
