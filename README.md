@@ -1,5 +1,12 @@
 # A deep learning-based approach for high throughput plant phenotyping
 
+This repository is the companion for the paper [A deep learning-based approach for high throughput plant phenotyping, 
+Dobos et al.](http://www.plantphysiol.org/content/181/4/1415). 
+
+[The dataset used in the article can be found at this page](https://www.kaggle.com/tivadardanka/plant-segmentation/).
+
+[The pretrained model used in the research article can be downloaded here.](https://drive.google.com/open?id=1SlUui64l-k63vxysl0YAflKaECfpj8Rr)
+
 ## Contents
 - [Usage, dependencies](#usage)
 - [Using a trained model for measuring hypocotyls](#measuring)
@@ -34,6 +41,8 @@ The `src/measure.py` script can be used to run the algorithm. The required argum
 - `--images_path`: path to the images folder, which must have the structure outlined above.
 - `--model`: path to the UNet model used in the algorithm.
 - `--result_folder`: path to the folder where results will be exported.  
+
+[The model used in the research article can be found here.](https://drive.google.com/open?id=1SlUui64l-k63vxysl0YAflKaECfpj8Rr)
 
 Additionally, you can specify the following:
 - `--min_object_size`: the expected minimum object size in pixels. Default is 0. Detected objects below this size will be filtered out.
