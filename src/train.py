@@ -22,6 +22,10 @@ parser.add_argument("--model_save_freq", type=int, default=200)
 
 args = parser.parse_args()
 
+tf_train = make_transform(crop=(512, 512), long_mask=True)
+tf_validate = make_transform(crop=(512, 512), long_mask=True, rotate_range=False,
+                             p_flip=0.0, normalize=False, color_jitter_params=None)
+
 # load dataset
 train_dataset_path = args.train_dataset
 train_dataset = ReadTrainDataset(train_dataset_path, transform=tf_train)
